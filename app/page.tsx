@@ -4,26 +4,34 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
-import { Bot, Map, ShieldAlert, Zap } from "lucide-react";
+import { Bot, Map, ShieldAlert, Zap, LogIn } from "lucide-react";
 import { startMockDataEngine } from "@/lib/mock-data-engine";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Home() {
   const [stats, setStats] = useState({ activeSessions: 0, activeAlerts: 0 });
+  const { user, role, loading } = useAuth();
 
   useEffect(() => {
     // Start mock data for the demo
     startMockDataEngine();
 
     // Listen to live stats
-    const unsub = onSnapshot(doc(db, 'stadium_state', 'global_stats'), (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        setStats({
-          activeSessions: data.activeSessions || 0,
-          activeAlerts: data.activeAlerts || 0,
-        });
+    const unsub = onSnapshot(
+      doc(db, 'stadium_state', 'global_stats'), 
+      (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          setStats({
+            activeSessions: data.activeSessions || 0,
+            activeAlerts: data.activeAlerts || 0,
+          });
+        }
+      },
+      (error) => {
+        console.error("Error fetching live stats:", error);
       }
-    });
+    );
 
     return () => unsub();
   }, []);
@@ -45,14 +53,29 @@ export default function Home() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-6 mb-20 w-full sm:w-auto">
-          <Link href="/assistant" className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg transition-all shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] flex items-center justify-center gap-3">
-            <Bot className="w-5 h-5" />
-            Launch Fan Assistant
-          </Link>
-          <Link href="/dashboard" className="px-8 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-lg transition-all border border-slate-700 flex items-center justify-center gap-3">
-            <ShieldAlert className="w-5 h-5" />
-            Ops Dashboard (Staff)
-          </Link>
+          {loading ? (
+            <div className="px-8 py-4 rounded-xl bg-slate-800 animate-pulse w-64 h-16"></div>
+          ) : user ? (
+            <>
+              {role === 'fan' && (
+                <Link href="/fan-dashboard" className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg transition-all shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] flex items-center justify-center gap-3">
+                  <Bot className="w-5 h-5" />
+                  Fan Dashboard
+                </Link>
+              )}
+              {role === 'staff' && (
+                <Link href="/dashboard" className="px-8 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-lg transition-all border border-slate-700 flex items-center justify-center gap-3">
+                  <ShieldAlert className="w-5 h-5" />
+                  Ops Dashboard
+                </Link>
+              )}
+            </>
+          ) : (
+            <Link href="/login" className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg transition-all shadow-[0_0_40px_-10px_rgba(37,99,235,0.5)] flex items-center justify-center gap-3">
+              <LogIn className="w-5 h-5" />
+              Sign In / Join
+            </Link>
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl">

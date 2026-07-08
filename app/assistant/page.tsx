@@ -1,14 +1,26 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Send, Mic, Settings2 } from "lucide-react";
+import { Send, Mic, Settings2, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/lib/AuthContext";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Assistant() {
+  const { user, loading, role } = useAuth();
+  const router = useRouter();
+
   const [messages, setMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
     { role: 'assistant', content: "Hi there! I'm Pulp Kicktion, your GenAI stadium companion for the 2026 World Cup. How can I help you today?" }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -63,13 +75,24 @@ export default function Assistant() {
     }
   };
 
+  if (loading) return null;
+  if (!user) return null;
+
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans">
       <div className="flex flex-col flex-1 max-w-4xl mx-auto h-full border-x border-slate-200 bg-white">
         
         {/* Header */}
-        <header className="p-4 border-b border-slate-200 bg-white flex justify-between items-center sticky top-0 z-10">
-          <h2 className="font-bold text-lg text-blue-600">Pulp Kicktion Fan Assistant</h2>
+        <header className="p-4 border-b border-slate-200 bg-white flex justify-between items-center sticky top-0 z-10 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Link href={role === 'staff' ? '/dashboard' : '/fan-dashboard'} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div>
+              <h2 className="font-bold text-lg text-blue-600 leading-none">Pulp Kicktion Fan Assistant</h2>
+              <p className="text-xs text-slate-500 mt-1">Chatting as {user.email?.split('@')[0]}</p>
+            </div>
+          </div>
           <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition">
             <Settings2 className="w-5 h-5" />
           </button>
