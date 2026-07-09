@@ -24,17 +24,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
       if (firebaseUser) {
-        // Fetch role from Firestore
+        setUser(firebaseUser);
         try {
-          // Add a timeout to getDoc so it doesn't hang forever if Firestore is offline
           const userDocRef = doc(db, 'users', firebaseUser.uid);
-          
-          const docPromise = getDoc(userDocRef);
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
-          
-          const userDocSnap = (await Promise.race([docPromise, timeoutPromise])) as unknown as import('firebase/firestore').DocumentSnapshot;
+          const userDocSnap = await getDoc(userDocRef);
 
           if (userDocSnap.exists()) {
             setRole(userDocSnap.data().role as 'fan' | 'staff');
@@ -46,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setRole('fan'); // fallback
         }
       } else {
+        setUser(null);
         setRole(null);
       }
       setLoading(false);

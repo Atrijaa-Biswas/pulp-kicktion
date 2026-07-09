@@ -1,22 +1,15 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Inter, Oswald } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
+import A11yToggle from "@/components/A11yToggle";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const oswald = Oswald({ subsets: ["latin"], variable: "--font-oswald" });
 
 export const metadata: Metadata = {
-  title: "Pulp Kicktion",
-  description: "GenAI Stadium Companion",
+  title: "Pulp Kicktion | Vintage Football Experience",
+  description: "GenAI Stadium Companion with a 1970s poster feel.",
 };
 
 export default function RootLayout({
@@ -27,10 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${oswald.variable} antialiased`}
       >
         <AuthProvider>
           {children}
+          <A11yToggle />
         </AuthProvider>
       </body>
     </html>

@@ -11,13 +11,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "dummy",
 };
 
-let app;
-try {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-} catch (e) {
-  console.error("Firebase initialization error", e);
-  app = getApp(); // or fallback
-}
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);

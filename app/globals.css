@@ -3,25 +3,76 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #EFE9DF; /* vintage.cream */
+  --foreground: #1A1A1A; /* vintage.black */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* For the poster theme, dark mode uses deep green as base */
+    --background: #133824; /* vintage.green */
+    --foreground: #EFE9DF; /* vintage.cream */
   }
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  font-family: var(--font-inter), sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  .poster-shadow {
+    box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
+  }
+  
+  .poster-border {
+    border: 3px solid var(--foreground);
+  }
+
+  /* Custom scrollbar for webkit */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(150, 150, 150, 0.3);
+    border-radius: 10px;
+  }
+}
+
+/* Accessibility Mode Overrides */
+body.a11y-mode {
+  --background: #ffffff;
+  --foreground: #000000;
+  font-size: 110%;
+}
+
+body.a11y-mode * {
+  border-color: #000000 !important;
+}
+
+body.a11y-mode *:focus {
+  outline: 3px solid #0000ff !important;
+  outline-offset: 2px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
   }
 }

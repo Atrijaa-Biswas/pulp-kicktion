@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "@/lib/firebase";
 import { collection, onSnapshot, query } from "firebase/firestore";
-import { Activity, Users, AlertTriangle, LogOut } from "lucide-react";
+import { Activity, Users, AlertTriangle, LogOut, ChevronDown, ChevronUp } from "lucide-react";
 import StadiumMap from "@/components/StadiumMap";
 import { useAuth } from "@/lib/AuthContext";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [queues, setQueues] = useState<QueueData[]>([]);
   const [densities, setDensities] = useState<DensityData[]>([]);
+  const [expandedAlert, setExpandedAlert] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && (!user || role !== 'staff')) {
@@ -23,7 +24,6 @@ export default function Dashboard() {
   }, [user, role, loading, router]);
 
   useEffect(() => {
-    // Listen to queues
     const qQueues = query(collection(db, 'stadium_state'));
     const unsub = onSnapshot(
       qQueues, 
@@ -45,89 +45,138 @@ export default function Dashboard() {
 
     return () => unsub();
   }, []);
+
   const handleSignOut = async () => {
     await auth.signOut();
     router.push('/');
   };
 
-  if (loading) {
-    return <div className="min-h-screen bg-slate-900 flex justify-center items-center">
-      <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>;
+  if (loading || !user || role !== 'staff') {
+    return (
+      <div className="min-h-screen bg-vintage-cream flex justify-center items-center">
+        <div className="w-12 h-12 border-4 border-vintage-green border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
-  if (!user || role !== 'staff') return null;
-
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans p-6">
-      <header className="mb-8 border-b border-slate-800 pb-4 flex justify-between items-center">
+    <div className="min-h-screen bg-vintage-cream text-vintage-black font-sans p-4 md:p-8 animate-fade-in">
+      <header className="mb-8 border-b-4 border-vintage-black pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Ops Dashboard</h1>
-          <p className="text-slate-400">Welcome, {user.email?.split('@')[0]} (Admin)</p>
+          <h1 className="text-4xl md:text-5xl font-headline font-black uppercase tracking-tighter text-vintage-green drop-shadow-[2px_2px_0px_#1A1A1A]">
+            Ops Control
+          </h1>
+          <p className="text-vintage-black/70 font-bold uppercase tracking-wide mt-1">
+            Operator: {user.email?.split('@')[0]}
+          </p>
         </div>
         <div className="flex gap-4">
-          <div className="px-4 py-2 bg-slate-800 rounded flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm font-mono">System Online</span>
+          <div className="px-4 py-2 bg-white border-4 border-vintage-black poster-shadow flex items-center gap-2">
+            <Activity className="w-5 h-5 text-vintage-green animate-pulse-slow" />
+            <span className="font-headline text-lg uppercase font-bold tracking-wider">System Online</span>
           </div>
           <button 
             onClick={handleSignOut}
-            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded flex items-center gap-2 transition-colors"
+            className="px-4 py-2 bg-vintage-red text-white border-4 border-vintage-black poster-shadow hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-2"
           >
-            <LogOut className="w-4 h-4" />
-            <span className="text-sm font-medium">Sign Out</span>
+            <LogOut className="w-5 h-5" />
+            <span className="font-headline text-lg uppercase font-bold tracking-wider">Sign Out</span>
           </button>
         </div>
       </header>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-8">
         
         {/* Heatmap Panel */}
-        <div className="lg:col-span-2 bg-slate-800 rounded-xl p-6 border border-slate-700">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-400" />
+        <div className="lg:col-span-2 bg-white border-4 border-vintage-black poster-shadow p-6 flex flex-col">
+          <h2 className="text-3xl font-headline font-black uppercase tracking-tighter mb-6 flex items-center gap-3 border-b-4 border-vintage-black pb-4">
+            <Users className="w-8 h-8 text-vintage-green" />
             Live Crowd Density
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             {densities.map((d, idx) => (
-              <div key={idx} className="bg-slate-900 rounded-lg p-4 border border-slate-700 relative overflow-hidden">
+              <div key={idx} className="bg-vintage-cream border-2 border-vintage-black p-4 relative overflow-hidden group">
                 <div 
-                  className="absolute bottom-0 left-0 w-full bg-blue-500/20 transition-all duration-1000" 
+                  className="absolute bottom-0 left-0 w-full bg-vintage-green/20 transition-all duration-1000" 
                   style={{ height: `${d.densityPercent}%` }} 
                 />
-                <h3 className="font-bold relative z-10">{d.zoneId}</h3>
-                <p className="text-2xl font-mono mt-2 relative z-10">{d.densityPercent}%</p>
+                <h3 className="font-headline text-xl font-bold uppercase relative z-10">{d.zoneId}</h3>
+                <p className="text-3xl font-mono font-bold mt-2 relative z-10">{d.densityPercent}%</p>
               </div>
             ))}
-            {densities.length === 0 && <div className="text-slate-500 col-span-3">Waiting for data...</div>}
+            {densities.length === 0 && <div className="text-vintage-black/50 font-bold uppercase col-span-4 p-4 border-2 border-dashed border-vintage-black">Awaiting telemetry...</div>}
           </div>
           
-          <div className="mt-8">
-            <h3 className="text-lg font-bold mb-4">Stadium Layout</h3>
-            <StadiumMap />
+          <div className="mt-auto bg-vintage-cream border-4 border-vintage-black p-4">
+            <h3 className="text-2xl font-headline font-black uppercase tracking-tighter mb-4 text-center">Stadium Sector Map</h3>
+            <div className="bg-white border-2 border-vintage-black">
+              <StadiumMap />
+            </div>
           </div>
         </div>
 
         {/* Queues & Alerts Panel */}
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700 flex flex-col gap-6">
-          <div>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-400" />
+        <div className="flex flex-col gap-8">
+          
+          <div className="bg-white border-4 border-vintage-black poster-shadow p-6">
+            <h2 className="text-3xl font-headline font-black uppercase tracking-tighter mb-6 flex items-center gap-3 border-b-4 border-vintage-black pb-4">
+              <AlertTriangle className="w-8 h-8 text-vintage-red" />
               Gate Queues
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {queues.map((q, idx) => (
-                <div key={idx} className="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
-                  <span className="font-bold">{q.gateId}</span>
-                  <div className="text-right">
-                    <p className="font-mono text-amber-400">{q.queueLength} people</p>
-                    <p className="text-xs text-slate-400">~{q.estimatedWaitMinutes} min wait</p>
+                <div key={idx} className="bg-vintage-cream border-2 border-vintage-black p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-headline text-2xl font-bold uppercase tracking-wider">{q.gateId}</span>
+                    <span className={`font-mono text-xl font-bold ${q.estimatedWaitMinutes > 15 ? 'text-vintage-red' : 'text-vintage-green'}`}>
+                      {q.estimatedWaitMinutes} MIN
+                    </span>
                   </div>
+                  <div className="w-full bg-white border-2 border-vintage-black h-4">
+                    <div 
+                      className={`h-full ${q.estimatedWaitMinutes > 15 ? 'bg-vintage-red' : 'bg-vintage-green'}`} 
+                      style={{ width: `${Math.min(100, (q.queueLength / 500) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="font-bold text-sm uppercase mt-2 text-right">{q.queueLength} People</p>
                 </div>
               ))}
-              {queues.length === 0 && <div className="text-slate-500">Waiting for data...</div>}
+              {queues.length === 0 && <div className="text-vintage-black/50 font-bold uppercase p-4 border-2 border-dashed border-vintage-black">No queues reported</div>}
             </div>
           </div>
+
+          <div className="bg-white border-4 border-vintage-black poster-shadow p-6 flex-1">
+            <h2 className="text-3xl font-headline font-black uppercase tracking-tighter mb-6 border-b-4 border-vintage-black pb-4 text-vintage-orange">
+              Situation Reports
+            </h2>
+            <div className="space-y-4">
+              {/* Dummy incident data for demo */}
+              {[
+                { id: '1', loc: 'North Stand', desc: 'Spill near section 104, cleanup requested.' },
+                { id: '2', loc: 'West Gate', desc: 'Scanner malfunction on lane 3.' }
+              ].map(inc => (
+                <div key={inc.id} className="border-2 border-vintage-black">
+                  <button 
+                    onClick={() => setExpandedAlert(expandedAlert === inc.id ? null : inc.id)}
+                    className="w-full bg-vintage-cream p-4 flex justify-between items-center hover:bg-vintage-orange/10 transition-colors"
+                  >
+                    <span className="font-headline text-xl font-bold uppercase tracking-wider text-left">{inc.loc}</span>
+                    {expandedAlert === inc.id ? <ChevronUp /> : <ChevronDown />}
+                  </button>
+                  {expandedAlert === inc.id && (
+                    <div className="p-4 bg-white border-t-2 border-vintage-black font-bold uppercase text-sm leading-relaxed">
+                      {inc.desc}
+                      <button className="mt-4 px-4 py-2 bg-vintage-green text-white border-2 border-vintage-black font-headline text-lg uppercase tracking-widest w-full hover:bg-vintage-green/80 transition-colors">
+                        Resolve Incident
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
       </div>
