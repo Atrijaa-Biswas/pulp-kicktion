@@ -59,7 +59,9 @@ export default function Home() {
 
         <div className="flex flex-col sm:flex-row gap-8 mb-24 w-full sm:w-auto">
           {loading ? (
-            <div className="px-10 py-6 bg-vintage-green/50 animate-pulse w-64 h-20 border-4 border-vintage-black"></div>
+            <div className="px-10 py-5 bg-vintage-green/50 text-vintage-cream font-headline text-xl uppercase tracking-wider font-bold border-4 border-vintage-black flex items-center justify-center animate-pulse w-64 h-20">
+              LOADING...
+            </div>
           ) : user ? (
             <>
               {role === 'fan' && (
