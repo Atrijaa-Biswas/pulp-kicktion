@@ -46,8 +46,13 @@ export default function Login() {
         setRole(selectedRole);
         router.push(selectedRole === 'staff' ? '/dashboard' : '/fan-dashboard');
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        // The AuthContext will pick up the login, fetch role, and redirect via useEffect.
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        // For the demo, we allow the role selector on Sign In to overwrite the role in DB
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          role: selectedRole,
+        }, { merge: true });
+        setRole(selectedRole);
+        router.push(selectedRole === 'staff' ? '/dashboard' : '/fan-dashboard');
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -71,7 +76,7 @@ export default function Login() {
       const userDocSnap = await getDoc(userDocRef);
       
       if (!userDocSnap.exists()) {
-        const assignedRole = isSignUp ? selectedRole : 'fan';
+        const assignedRole = selectedRole;
         await setDoc(userDocRef, {
           role: assignedRole,
           email: result.user.email,
@@ -80,10 +85,11 @@ export default function Login() {
         setRole(assignedRole);
         router.push(assignedRole === 'staff' ? '/dashboard' : '/fan-dashboard');
       } else {
-        // If document exists, role will be fetched via context, but we can also manually redirect
-        const existingRole = userDocSnap.data().role;
-        setRole(existingRole);
-        router.push(existingRole === 'staff' ? '/dashboard' : '/fan-dashboard');
+        // If document exists, update it for demo flexibility so user can switch roles
+        const assignedRole = selectedRole;
+        await setDoc(userDocRef, { role: assignedRole }, { merge: true });
+        setRole(assignedRole);
+        router.push(assignedRole === 'staff' ? '/dashboard' : '/fan-dashboard');
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -127,28 +133,26 @@ export default function Login() {
         )}
 
         <form onSubmit={handleAuth} className="space-y-6">
-          {isSignUp && (
-            <div className="flex gap-4 p-2 bg-vintage-cream border-2 border-vintage-black poster-shadow mb-4">
-              <button
-                type="button"
-                onClick={() => setSelectedRole('fan')}
-                className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider border-2 transition-all ${
-                  selectedRole === 'fan' ? 'bg-vintage-green text-white border-vintage-black' : 'bg-transparent text-vintage-black border-transparent hover:bg-vintage-green/10'
-                }`}
-              >
-                Fan
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedRole('staff')}
-                className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider border-2 transition-all ${
-                  selectedRole === 'staff' ? 'bg-vintage-orange text-white border-vintage-black' : 'bg-transparent text-vintage-black border-transparent hover:bg-vintage-orange/10'
-                }`}
-              >
-                Staff
-              </button>
-            </div>
-          )}
+          <div className="flex gap-4 p-2 bg-vintage-cream border-2 border-vintage-black poster-shadow mb-4">
+            <button
+              type="button"
+              onClick={() => setSelectedRole('fan')}
+              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider border-2 transition-all ${
+                selectedRole === 'fan' ? 'bg-vintage-green text-white border-vintage-black' : 'bg-transparent text-vintage-black border-transparent hover:bg-vintage-green/10'
+              }`}
+            >
+              Fan
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRole('staff')}
+              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider border-2 transition-all ${
+                selectedRole === 'staff' ? 'bg-vintage-orange text-white border-vintage-black' : 'bg-transparent text-vintage-black border-transparent hover:bg-vintage-orange/10'
+              }`}
+            >
+              Staff
+            </button>
+          </div>
 
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-vintage-black/50" />

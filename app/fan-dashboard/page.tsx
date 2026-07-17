@@ -3,17 +3,19 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useRouter } from "next/navigation";
-import { LogOut, Bot, Navigation, Activity, Clock, Trophy } from "lucide-react";
+import { LogOut, Bot, Navigation, Activity, Clock, Trophy, Megaphone, BellRing } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import Link from "next/link";
 
 interface QueueData { gateId: string; queueLength: number; estimatedWaitMinutes: number; }
+interface AlertData { id: string; type: string; message: string; createdAt: any; }
 
 export default function FanDashboard() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
   const [queues, setQueues] = useState<QueueData[]>([]);
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
 
   // Ball position state for animation
   const [ballPos, setBallPos] = useState({ x: 50, y: 50 });
@@ -27,7 +29,7 @@ export default function FanDashboard() {
   useEffect(() => {
     // Listen to queues for some live data
     const qQueues = query(collection(db, 'stadium_state'));
-    const unsub = onSnapshot(
+    const unsubQueues = onSnapshot(
       qQueues, 
       (snapshot) => {
         const qData: QueueData[] = [];
@@ -42,6 +44,33 @@ export default function FanDashboard() {
       }
     );
 
+    // Listen to alerts for announcements and resolutions
+    const qAlerts = query(collection(db, 'alerts'), orderBy('createdAt', 'desc'));
+    const unsubAlerts = onSnapshot(
+      qAlerts,
+      (snapshot) => {
+        const altData: AlertData[] = [];
+        const now = Date.now();
+        // 12 hours expiration
+        const EXPIRATION_MS = 12 * 60 * 60 * 1000;
+        
+        snapshot.forEach(doc => {
+           const data = doc.data();
+           let isExpired = false;
+           if (data.createdAt && data.createdAt.toMillis) {
+             isExpired = now - data.createdAt.toMillis() > EXPIRATION_MS;
+           }
+           if (!isExpired) {
+             altData.push({ id: doc.id, ...data } as AlertData);
+           }
+        });
+        setAlerts(altData);
+      },
+      (error) => {
+        console.error("Error fetching alerts:", error);
+      }
+    );
+
     // Animate ball randomly
     const interval = setInterval(() => {
       setBallPos({
@@ -51,7 +80,8 @@ export default function FanDashboard() {
     }, 2000);
 
     return () => {
-      unsub();
+      unsubQueues();
+      unsubAlerts();
       clearInterval(interval);
     };
   }, []);
@@ -95,6 +125,44 @@ export default function FanDashboard() {
 
       <main className="flex-1 max-w-6xl mx-auto w-full p-4 md:p-8 flex flex-col gap-12">
         
+        {/* Live Announcements Ticker / List */}
+        <section className="bg-vintage-orange border-4 border-vintage-black poster-shadow p-6 group">
+          <h2 className="text-3xl font-headline font-black uppercase tracking-tighter mb-4 flex items-center gap-3 border-b-4 border-vintage-black pb-4 text-vintage-black">
+            <Megaphone className="w-8 h-8" />
+            Live Updates & Announcements
+          </h2>
+          
+          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
+            {alerts.length > 0 ? alerts.map(alert => (
+              <div 
+                key={alert.id} 
+                className={`min-w-[300px] max-w-[400px] shrink-0 p-4 border-4 border-vintage-black snap-start flex flex-col justify-between
+                  ${alert.type === 'resolution' ? 'bg-vintage-cream' : 'bg-white'}
+                `}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <BellRing className={`w-5 h-5 ${alert.type === 'resolution' ? 'text-vintage-green' : 'text-vintage-red'} animate-pulse`} />
+                  <span className="font-bold uppercase tracking-widest text-xs text-vintage-black/70">
+                    {alert.type === 'resolution' ? 'All Clear' : 'Official Announcement'}
+                  </span>
+                </div>
+                <p className="font-bold text-lg leading-tight text-balance">
+                  {alert.message}
+                </p>
+                {alert.createdAt && alert.createdAt.toDate && (
+                  <span className="font-mono text-xs font-bold mt-4 block opacity-50">
+                    {alert.createdAt.toDate().toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+            )) : (
+              <div className="bg-white p-6 border-4 border-vintage-black w-full flex items-center justify-center">
+                <span className="font-headline text-xl uppercase font-bold text-vintage-black/50">No Active Announcements</span>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Interactive Pitch Section */}
         <section className="bg-white border-4 border-vintage-black poster-shadow p-6 group">
           
