@@ -9,12 +9,14 @@ interface AuthContextType {
   user: User | null;
   role: 'fan' | 'staff' | null;
   loading: boolean;
+  setRole: (role: 'fan' | 'staff' | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
   loading: true,
+  setRole: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -50,7 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
+    <AuthContext.Provider value={{ user, role, loading, setRole }}>
       {children}
     </AuthContext.Provider>
   );

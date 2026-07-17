@@ -19,7 +19,7 @@ export default function Assistant() {
   const [activeZone, setActiveZone] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (!loading && (!user || role !== 'fan')) {
+    if (!loading && (!user || (role !== 'fan' && role !== 'staff'))) {
       router.push('/login');
     }
   }, [user, role, loading, router]);
@@ -109,15 +109,32 @@ export default function Assistant() {
         {/* Header */}
         <header className="p-4 border-b-4 border-vintage-black bg-vintage-green text-white flex justify-between items-center z-10">
           <div className="flex items-center gap-4">
-            <Link href="/fan-dashboard" className="p-2 text-white hover:bg-white/20 border-2 border-transparent hover:border-white transition-colors">
+            <button 
+              onClick={() => router.push(role === 'staff' ? '/dashboard' : '/fan-dashboard')} 
+              className="p-2 text-white hover:bg-white/20 border-2 border-transparent hover:border-white transition-colors"
+            >
               <ArrowLeft className="w-6 h-6" />
-            </Link>
+            </button>
             <div>
               <h2 className="font-headline font-black text-2xl uppercase tracking-widest leading-none drop-shadow-[2px_2px_0px_#1A1A1A]">Pulp Kicktion AI</h2>
               <p className="text-xs font-bold uppercase tracking-widest mt-1 opacity-80">Terminal: {user.email?.split('@')[0]}</p>
             </div>
           </div>
-          <button className="p-2 text-white hover:bg-white/20 border-2 border-transparent hover:border-white transition-colors">
+          <button 
+            onClick={() => {
+              const currentMode = document.body.classList.contains("a11y-mode");
+              const newMode = !currentMode;
+              localStorage.setItem("a11y-mode", String(newMode));
+              if (newMode) {
+                document.body.classList.add("a11y-mode");
+              } else {
+                document.body.classList.remove("a11y-mode");
+              }
+              window.dispatchEvent(new Event("a11y-mode-toggled"));
+            }}
+            className="p-2 text-white hover:bg-white/20 border-2 border-transparent hover:border-white transition-colors"
+            aria-label="Toggle Accessibility Mode"
+          >
             <Settings2 className="w-6 h-6" />
           </button>
         </header>

@@ -9,6 +9,13 @@ export default function A11yToggle() {
     const savedMode = localStorage.getItem("a11y-mode") === "true";
     setA11yMode(savedMode);
     if (savedMode) document.body.classList.add("a11y-mode");
+
+    const handleA11yToggle = () => {
+      setA11yMode(localStorage.getItem("a11y-mode") === "true");
+    };
+
+    window.addEventListener("a11y-mode-toggled", handleA11yToggle);
+    return () => window.removeEventListener("a11y-mode-toggled", handleA11yToggle);
   }, []);
 
   const toggleMode = () => {

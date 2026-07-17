@@ -14,7 +14,7 @@ import { Zap, Mail, Lock, LogIn } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 
 export default function Login() {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, setRole } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,10 +43,11 @@ export default function Login() {
           email,
           createdAt: Date.now()
         });
-        // The AuthContext will pick up the new user and role, and redirect.
+        setRole(selectedRole);
+        router.push(selectedRole === 'staff' ? '/dashboard' : '/fan-dashboard');
       } else {
         await signInWithEmailAndPassword(auth, email, password);
-        // The AuthContext will pick up the login, fetch role, and redirect.
+        // The AuthContext will pick up the login, fetch role, and redirect via useEffect.
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -76,8 +77,14 @@ export default function Login() {
           email: result.user.email,
           createdAt: Date.now()
         });
+        setRole(assignedRole);
+        router.push(assignedRole === 'staff' ? '/dashboard' : '/fan-dashboard');
+      } else {
+        // If document exists, role will be fetched via context, but we can also manually redirect
+        const existingRole = userDocSnap.data().role;
+        setRole(existingRole);
+        router.push(existingRole === 'staff' ? '/dashboard' : '/fan-dashboard');
       }
-      // AuthContext will handle the rest.
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -88,7 +95,7 @@ export default function Login() {
     }
   };
 
-  if (loading || (user && role)) {
+  if (loading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-vintage-green border-t-transparent rounded-full animate-spin"></div>
